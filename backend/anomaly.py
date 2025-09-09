@@ -1,5 +1,17 @@
-from geopy.distance import geodesic
 import time
+import math
+
+def calculate_distance(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    """Calculate distance between two points using Haversine formula. Returns distance in km."""
+    R = 6371  # Earth's radius in kilometers
+    
+    lat1, lng1, lat2, lng2 = map(math.radians, [lat1, lng1, lat2, lng2])
+    dlat = lat2 - lat1
+    dlng = lng2 - lng1
+    
+    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlng/2)**2
+    c = 2 * math.asin(math.sqrt(a))
+    return R * c
 
 def deviation_from_route(current: tuple, planned_points: list, threshold_km: float = 3.0) -> bool:
     """Return True if current (lat,lng) is > threshold_km away from every planned route point."""
@@ -7,7 +19,7 @@ def deviation_from_route(current: tuple, planned_points: list, threshold_km: flo
         return False
     lat, lng = current
     for p in planned_points:
-        d = geodesic((lat, lng), (p["lat"], p["lng"])).km
+        d = calculate_distance(lat, lng, p["lat"], p["lng"])
         if d <= threshold_km:
             return False
     return True

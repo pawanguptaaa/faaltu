@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Tourist App</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; }
+    header { padding: 12px; background:#003; color:white; display:flex; justify-content:space-between; align-items:center;}
+    #map { height: calc(100vh - 160px); }
+    .panel { padding: 12px; display:flex; gap:8px; flex-wrap:wrap; }
+    button { padding:10px 14px; border:0; border-radius:10px; cursor:pointer; }
+    .primary { background:#0a66c2; color:white; }
+    .danger { background:#b50000; color:white; }
+    input, textarea { padding:8px; border:1px solid #ddd; border-radius:8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h3>Tourist App</h3>
+    <div id="tid"></div>
+  </header>
+  <div class="panel">
+    <input id="name" placeholder="Name" value="Alex"/>
+    <input id="kyc" placeholder="KYC Hash (mock)" value="hash123"/>
+    <input id="emg" placeholder="Emergency Contact" value="+91-9999999999"/>
+    <button class="primary" onclick="registerTourist()">Register Tourist</button>
+    <button onclick="startWalk()">Start Simulated Walk</button>
+    <button class="danger" onclick="panic()">PANIC</button>
+  </div>
+  <div id="map"></div>
+
+<script>
+let map = L.map('map').setView([26.17, 91.77], 12); // around Guwahati
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19, attribution: '&copy; OpenStreetMap'
+}).addTo(map);
+
+let touristId = null;
+let marker = null;
+let walkTimer = null;
+
+// Draw a sample high-risk rectangle
+const rect = L.polygon([[26.14,91.73],[26.14,91.80],[26.20,91.80],[26.20,91.73]], {color:'red'}).addTo(map)
+  .bindPopup("High-Risk Zone");
+
+const itinerary = [
+  {lat:26.17, lng:91.76},
+  {lat:26.18, lng:91.77},
+  {lat:26.185, lng:91.78},
+];
+
+async function registerTourist(){
+  const res = await fetch('/register', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      name: document.getElementById('name').value,
+      passport_or_aadhaar_hash: document.getElementById('kyc').value,
+      emergency_contact: document.getElementById('emg').value,
+      itinerary
+    })
+  });
+  const data = await res.json();
+  touristId = data.tourist_id;
+  document.getElementById('tid').innerText = "ID: " + touristId.slice(0,8) + "...";
+  alert("Registered. Ledger hash: " + data.ledger_hash.slice(0,10) + "...");
+}
+
+async function sendLocation(lat,lng){
+  if(!touristId){ alert("Register first"); return; }
+  if(!marker){
+    marker = L.marker([lat,lng]).addTo(map).bindPopup("You");
+  }else{
+    marker.setLatLng([lat,lng]);
+  }
+  await fetch('/location', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ tourist_id: touristId, lat, lng })
+  });
+}
+
+function startWalk(){
+  if(!touristId){ alert("Register first"); return; }
+  if(walkTimer) clearInterval(walkTimer);
+  let pt = {lat:26.165, lng:91.758};
+  sendLocation(pt.lat, pt.lng);
+  walkTimer = setInterval(()=>{
+    // random jitter, sometimes push into high-risk zone to trigger alert
+    pt.lat += (Math.random()-0.5)*0.003;
+    pt.lng += (Math.random()-0.5)*0.003;
+    if(Math.random()<0.2){ pt.lat = 26.18; pt.lng = 91.76; } // nudge towards risk
+    sendLocation(pt.lat, pt.lng);
+  }, 3000);
+}
+
+async function panic(){
+  if(!touristId){ alert("Register first"); return; }
+  let pos = marker ? marker.getLatLng() : map.getCenter();
+  const form = new FormData();
+  form.append('tourist_id', touristId);
+  form.append('lat', pos.lat);
+  form.append('lng', pos.lng);
+  await fetch('/panic', { method:'POST', body: form });
+  alert("PANIC alert sent");
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Smart Tourist Safety (Prototype)</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; }
+    header { padding: 16px; background:#0a2540; color:white; }
+    main { padding: 16px; }
+    a.btn { display:inline-block; margin:8px 8px 8px 0; padding:12px 16px; background:#0a66c2; color:white; text-decoration:none; border-radius:10px; }
+    .card { padding:16px; border:1px solid #eee; border-radius:12px; margin-bottom:16px; }
+    code { background:#f6f8fa; padding:2px 6px; border-radius:6px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>Smart Tourist Safety — Working Prototype</h2>
+  </header>
+  <main>
+    <div class="card">
+      <p>Yeh demo do roles dikhata hai:</p>
+      <ul>
+        <li><b>Tourist App</b>: live location + panic button + geofence alerts</li>
+        <li><b>Police Dashboard</b>: real-time alerts, heatmap-like markers</li>
+      </ul>
+      <a class="btn" href="/tourist">Open Tourist App</a>
+      <a class="btn" href="/dashboard">Open Police Dashboard</a>
+    </div>
+
+    <div class="card">
+      <h3>Quick Start (Demo Flow)</h3>
+      <ol>
+        <li>Tourist page pe "Register Tourist" dabao.</li>
+        <li>Map pe "Start Simulated Walk" se movement begin hoga.</li>
+        <li>Dashboard page open karo — alerts live dikhenge (WebSocket).</li>
+        <li>Tourist se "Panic" press karke alert trigger dekho.</li>
+      </ol>
+      <p>Ledger (tamper-proof log) verify: <code>/ledger/verify</code></p>
+    </div>
+  </main>
+</body>
+</html>
